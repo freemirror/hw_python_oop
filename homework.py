@@ -27,6 +27,7 @@ class Training:
     """Базовый класс тренировки."""
     M_IN_KM: int = 1000
     LEN_STEP: float = 0.65
+    M_IN_H: int = 60
 
     def __init__(self,
                  action: int,
@@ -37,20 +38,17 @@ class Training:
         self.duration = duration
         self.weight = weight
 
-    def get_distance(self,
-                     LEN_STEP=LEN_STEP,
-                     M_IN_KM=M_IN_KM) -> float:
+    def get_distance(self) -> float:
         """Получить дистанцию в км."""
-        return self.action * LEN_STEP / M_IN_KM
+        return self.action * self.LEN_STEP / self.M_IN_KM
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
-        distance: float = self.get_distance()
-        return distance / self.duration
+        return self.get_distance() / self.duration
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
+        raise NotImplementedError
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -63,20 +61,20 @@ class Training:
 
 class Running(Training):
     """Тренировка: бег."""
+    COEFF_CAL_RUN: int = 18
+    COEFF_CAL_RUN_MIN: int = 20
 
     def get_spent_calories(self) -> float:
-        M_IN_KM = super().M_IN_KM
-        coeff_calorie_1: int = 18
-        coeff_calorie_2: int = 20
-        min_in_hour: int = 60
-        mean_speed: float = self.get_mean_speed()
-        return ((coeff_calorie_1 * mean_speed - coeff_calorie_2)
-                * self.weight / M_IN_KM * self.duration
-                * min_in_hour)
+        return ((self.COEFF_CAL_RUN * self.get_mean_speed()
+                - self.COEFF_CAL_RUN_MIN) * self.weight / self.M_IN_KM
+                * self.duration * self.M_IN_H)
 
 
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
+    COEFF_CAL_WALK: float = 0.035
+    COEFF_CAL_WALK_AVE: float = 0.029
+    SQUARE_POW: int = 2
 
     def __init__(self,
                  action: int,
@@ -87,19 +85,17 @@ class SportsWalking(Training):
         self.height = height
 
     def get_spent_calories(self) -> float:
-        coeff_calorie_1: float = 0.035
-        coeff_calorie_2: float = 0.029
-        min_in_hour: int = 60
-        mean_speed: float = self.get_mean_speed()
-        return ((coeff_calorie_1 * self.weight
-                + ((mean_speed ** 2) // self.height)
-                * coeff_calorie_2 * self.weight)
-                * self.duration * min_in_hour)
+        return ((self.COEFF_CAL_WALK * self.weight
+                + ((self.get_mean_speed() ** self.SQUARE_POW) // self.height)
+                * self.COEFF_CAL_WALK_AVE * self.weight)
+                * self.duration * self.M_IN_H)
 
 
 class Swimming(Training):
     """Тренировка: плавание."""
     LEN_STEP: float = 1.38
+    COEFF_CAL_SWM: float = 1.1
+    COEFF_CAL_SWM_WGH: int = 2
 
     def __init__(self,
                  action: int,
@@ -112,26 +108,12 @@ class Swimming(Training):
         self.count_pool = count_pool
 
     def get_mean_speed(self) -> float:
-        M_IN_KM: int = super().M_IN_KM
         return (self.length_pool * self.count_pool
-                / M_IN_KM / self.duration)
+                / self.M_IN_KM / self.duration)
 
     def get_spent_calories(self) -> float:
-        coeff_calorie_1: float = 1.1
-        coeff_calorie_2: int = 2
-        mean_speed: float = self.get_mean_speed()
-        return ((mean_speed + coeff_calorie_1) * coeff_calorie_2
-                * self.weight)
-
-    def show_training_info(self, LEN_STEP=LEN_STEP) -> InfoMessage:
-        distance = self.get_distance(LEN_STEP)
-        speed = self.get_mean_speed()
-        calories = self.get_spent_calories()
-        return InfoMessage(training_type=self.__class__.__name__,
-                           duration=self.duration,
-                           distance=distance,
-                           speed=speed,
-                           calories=calories)
+        return ((self.get_mean_speed() + self.COEFF_CAL_SWM)
+                * self.COEFF_CAL_SWM_WGH * self.weight)
 
 
 def read_package(workout_type: str, data: list) -> Training:
