@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-
+from training_generator import packages
 
 class InfoMessage:
     """Информационное сообщение о тренировке."""
@@ -132,11 +132,11 @@ def main(training: Training) -> None:
 
 
 if __name__ == '__main__':
-    packages: List[Tuple[str, List[int]]] = [
+    '''packages: List[Tuple[str, List[int]]] = [
         ('SWM', [720, 1, 80, 25, 40]),
         ('RUN', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
-    ]
+    ]'''
 
     for workout_type, data in packages:
         training = read_package(workout_type, data)
